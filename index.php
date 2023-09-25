@@ -4,7 +4,8 @@
 
 //for alert mesage
 $insert = false;
-
+$update = false;
+$delete = false;
 
 //connecting to database
 $servername = "localhost";
@@ -20,14 +21,41 @@ if (!$conn) {
 }
 
 
+//issest used for checking error and data aako xa ki xaina check garxa
+if(isset($_GET['delete'])){
+  $sno =  $_GET['delete'];
+  $delete = true;
+  $sql = "DELETE FROM `notes` WHERE `sno` = $sno";
+  $result = mysqli_query($conn, $sql);
+}
+
+//update record
+//here if ma gaye update and else ma gaye insert
 if ($_SERVER['REQUEST_METHOD'] == 'POST'){
-  if(isset($_POST['snoEdit']))
-  {
-    echo "yes";
-    exit();
+  if(isset($_POST['snoEdit'])){
+  
+    // variables declare
+    $sno = $_POST["snoEdit"];
+    $title = $_POST["titleEdit"];
+    $description = $_POST["descriptionEdit"];
+
+    //update query 
+    $sql = "UPDATE `notes` SET `title` = '$title' , `description` = '$description' WHERE `notes`.`sno` = $sno";
+    $result = mysqli_query($conn, $sql);
+
+    //msg dekhauna 
+    if($result){
+      $update = true;
+    }
+    else{
+      echo "We have update the record succesfully";
+    }
   }
   else
   {
+
+    //insert suru
+    // declare varibale for insert query haru
     $title = $_POST["title"];
     $description = $_POST["description"];
 
@@ -43,11 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     else{
       echo "The record is not sucessfully recorded! <br>". mysqli_error($conn);
     }
-
-
   }
 }
-
 ?>
 <!doctype html>
 <html lang="en">
@@ -69,7 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
   Edit Modal
 </button> -->
 
-<!-- Edit Modal -->
+<!-- Edit Modal  -->
+<!-- pop up message aauxa eidt thichda -->
 <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModal" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -84,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         <input type="hidden" name="snoEdit" id="snoEdit" >
         <div class="form-group">
           <label for="title">Note Title</label>
-          <input type="text" class="form-control" id="titleEdit" name="titleEdit" aria-describedby="emailHelp" placeholder="Enter email">
+          <input type="text" class="form-control" id="titleEdit" name="titleEdit" aria-describedby="emailHelp" placeholder="Enter new Note">
           
         </div>
         
@@ -95,14 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
         <button type="submit" class="btn btn-primary">Update Note</button>
       </form>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
-      </div>
+      
     </div>
   </div>
 </div>
 
+<!-- nav section -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="#">iNotes</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -128,7 +152,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
   </div>
 </nav>
 
+
 <?php
+//messgae  after inserting notes
 if($insert){
   echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>
   <strong>Success!!</strong> You notes has been added sucessfully.
@@ -139,12 +165,37 @@ if($insert){
 }
 
 ?>
+<?php
+//message after delete
+if($delete){
+  echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>
+  <strong>Success!!</strong> You notes has been deleted sucessfully.
+  <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+    <span aria-hidden='true'>&times;</span>
+  </button>
+</div>";
+}
+
+?>
+<?php
+//messgae after updates
+if($update){
+  echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>
+  <strong>Success!!</strong> You notes has been updated sucessfully.
+  <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+    <span aria-hidden='true'>&times;</span>
+  </button>
+</div>";
+}
+?>
+
+<!-- note haru halne container -->
 <div class="container my-5">
     <h2>Add a Note</h2>
     <form action="/basic/phpcrud/notes/index.php" method="post">  
         <div class="form-group">
           <label for="title">Note Title</label>
-          <input type="text" class="form-control" id="title" name="title" aria-describedby="emailHelp" placeholder="Enter email">
+          <input type="text" class="form-control" id="title" name="title" aria-describedby="emailHelp" placeholder="Enter a note">
           
         </div>
         
@@ -167,6 +218,7 @@ if($insert){
           </thead>
           <tbody>
             <?php
+            //display query
               $sql = "SELECT * FROM `notes`";
               $result = mysqli_query($conn, $sql);
               $sno = 0;
@@ -177,7 +229,8 @@ if($insert){
                 <th scope='row'>". $sno . "</th>
                 <td>". $row['title'] . "</td>
                 <td>". $row['description'] . "</td>
-                <td> <button class='edit btn btn-sm btm-primary' id=".$row['sno'].">Edit</button> <a href='/del'>Delete</a></td>
+                <td> <button class='edit btn btn-sm btn-primary ' id=".$row['sno'].">Edit</button> 
+                <button class='delete btn btn-sm btn-danger' id=d".$row['sno'].">Delete</button>
               </tr>";
               }
             ?> 
@@ -199,20 +252,38 @@ if($insert){
       let table = new DataTable('#myTable');
     </script>
      <script>
+      // Script for modal edit, works according to the 
       edits = document.getElementsByClassName('edit');
       Array.from(edits).forEach((element)=>{
         element.addEventListener('click',(e)=>{
           console.log("edit ", );
-          tr = e.target.parentNode.parentNode
+          tr = e.target.parentNode.parentNode;   //parent wala linxa table am tr tr garera mathi
           title = tr.getElementsByTagName('td')[0].innerText;
-          description = tr.getElementsByTagName('td')[1].innerText;
+          description = tr.getElementsByTagName('td')[1].innerText; //index ma rahe xa tesko anusar tanxa data for edit
           console.log(description);
           console.log(title);
           titleEdit.value - title;
           descriptionEdit.value = description;
           snoEdit.value = e.target.id;
-          console.log(e.target.id);
+          console.log(e.target.id); //action listener
           $('#editModal').modal('toggle');
+      })
+    });
+    // for delete confimartion message
+    deletes = document.getElementsByClassName('delete');
+      Array.from(deletes).forEach((element)=>{
+        element.addEventListener('click',(e)=>{
+          console.log("edit ", );
+          sno = e.target.id.substr(1,)
+          
+          if (confirm("Are you sure you want to delete this note!!")){
+            console.log("yes");
+            window.location = `/basic/phpcrud/notes/index.php?delete=${sno}`;
+            //User  post request to submit a form
+          }
+          else{
+            console.log("no");
+          }
       })
     })
     </script>
