@@ -19,42 +19,89 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST'){
-  $title = $_POST["title"];
-  $description = $_POST["description"];
-
-  // Sql query for insert
-  $sql = "INSERT INTO `notes` (`title`, `description`) VALUES ('$title', '$description')";
-  $result = mysqli_query($conn, $sql);
-
-  // ADd a new 
-  if ($result){
-    // echo "The record is sucessfully recorded! <br>";
-    $insert = true;
+  if(isset($_POST['snoEdit']))
+  {
+    echo "yes";
+    exit();
   }
-  else{
-    echo "The record is not sucessfully recorded! <br>". mysqli_error($conn);
+  else
+  {
+    $title = $_POST["title"];
+    $description = $_POST["description"];
+
+    // Sql query for insert
+    $sql = "INSERT INTO `notes` (`title`, `description`) VALUES ('$title', '$description')";
+    $result = mysqli_query($conn, $sql);
+
+    // ADd a new 
+    if ($result){
+      // echo "The record is sucessfully recorded! <br>";
+      $insert = true;
+    }
+    else{
+      echo "The record is not sucessfully recorded! <br>". mysqli_error($conn);
+    }
+
+
   }
-
-
-
 }
 
 ?>
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
-    <title>Notes - Notes taking made easy!</title>
-  </head>
-  <body>
+    <link rel="stylesheet" href="//cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     
+    <title>Notes - Notes taking made easy!</title>
+   
+</head>
+<body>
+<!-- Edit modal -->
+<!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editModal">
+  Edit Modal
+</button> -->
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Edit Note</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      <form action="/basic/phpcrud/notes/index.php" method="post">  
+        <input type="hidden" name="snoEdit" id="snoEdit" >
+        <div class="form-group">
+          <label for="title">Note Title</label>
+          <input type="text" class="form-control" id="titleEdit" name="titleEdit" aria-describedby="emailHelp" placeholder="Enter email">
+          
+        </div>
+        
+        <div class="form-group">
+            <label for="exampleFormControlTextarea1">Note Description</label>
+            <textarea class="form-control" id="descriptionEdit" rows="3" name="descriptionEdit" placeholder="Enter Note Description"></textarea>
+          </div>
+        <button type="submit" class="btn btn-primary">Update Note</button>
+      </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="#">iNotes</a>
@@ -94,7 +141,7 @@ if($insert){
 ?>
 <div class="container my-5">
     <h2>Add a Note</h2>
-    <form action="/basic/phpcrud/index.php" method="post">  
+    <form action="/basic/phpcrud/notes/index.php" method="post">  
         <div class="form-group">
           <label for="title">Note Title</label>
           <input type="text" class="form-control" id="title" name="title" aria-describedby="emailHelp" placeholder="Enter email">
@@ -109,7 +156,7 @@ if($insert){
       </form>
 
       <div class="container mt-5" >
-        <table class="table">
+        <table class="table" id= "myTable">
           <thead>
             <tr>
               <th scope="col">SNo</th>
@@ -122,14 +169,16 @@ if($insert){
             <?php
               $sql = "SELECT * FROM `notes`";
               $result = mysqli_query($conn, $sql);
-              while ($row = mysqli_fetch_array($result)) {
+              $sno = 0;
+              while ($row = mysqli_fetch_array($result))
+              {
+                $sno =$sno + 1;
                 echo "<tr>
-                <th scope='row'>". $row['sno'] . "</th>
+                <th scope='row'>". $sno . "</th>
                 <td>". $row['title'] . "</td>
                 <td>". $row['description'] . "</td>
-                <td> Actions</td>
+                <td> <button class='edit btn btn-sm btm-primary' id=".$row['sno'].">Edit</button> <a href='/del'>Delete</a></td>
               </tr>";
-               
               }
             ?> 
            
@@ -137,7 +186,7 @@ if($insert){
         </table>
       </div>
 </div>
-
+<hr>
 
 
     <!-- Optional JavaScript -->
@@ -145,5 +194,27 @@ if($insert){
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="//cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+      let table = new DataTable('#myTable');
+    </script>
+     <script>
+      edits = document.getElementsByClassName('edit');
+      Array.from(edits).forEach((element)=>{
+        element.addEventListener('click',(e)=>{
+          console.log("edit ", );
+          tr = e.target.parentNode.parentNode
+          title = tr.getElementsByTagName('td')[0].innerText;
+          description = tr.getElementsByTagName('td')[1].innerText;
+          console.log(description);
+          console.log(title);
+          titleEdit.value - title;
+          descriptionEdit.value = description;
+          snoEdit.value = e.target.id;
+          console.log(e.target.id);
+          $('#editModal').modal('toggle');
+      })
+    })
+    </script>
   </body>
 </html>
