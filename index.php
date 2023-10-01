@@ -6,6 +6,7 @@
 $insert = false;
 $update = false;
 $delete = false;
+$notinsert = false;
 
 //connecting to database
 $servername = "localhost";
@@ -33,43 +34,45 @@ if(isset($_GET['delete'])){
 //here if ma gaye update and else ma gaye insert
 if ($_SERVER['REQUEST_METHOD'] == 'POST'){
   if(isset($_POST['snoEdit'])){
-  
     // variables declare
     $sno = $_POST["snoEdit"];
     $title = $_POST["titleEdit"];
     $description = $_POST["descriptionEdit"];
 
-    //update query 
+    // Update query 
     $sql = "UPDATE `notes` SET `title` = '$title' , `description` = '$description' WHERE `notes`.`sno` = $sno";
     $result = mysqli_query($conn, $sql);
 
-    //msg dekhauna 
+    // Check if the update was successful
     if($result){
       $update = true;
+    } else {
+      echo "We have updated the record successfully";
     }
-    else{
-      echo "We have update the record succesfully";
-    }
-  }
-  else
-  {
-
-    //insert suru
-    // declare varibale for insert query haru
+  } 
+  else {
+    // Insert starts here
+    // Declare variables for insert query
     $title = $_POST["title"];
     $description = $_POST["description"];
 
-    // Sql query for insert
-    $sql = "INSERT INTO `notes` (`title`, `description`) VALUES ('$title', '$description')";
-    $result = mysqli_query($conn, $sql);
+    // Check if title and description are not empty
+    if (!empty($title) && !empty($description)) {
+      // SQL query for insert
+      $sql = "INSERT INTO `notes` (`title`, `description`) VALUES ('$title', '$description')";
+      $result = mysqli_query($conn, $sql);
 
-    // ADd a new 
-    if ($result){
-      // echo "The record is sucessfully recorded! <br>";
-      $insert = true;
+      // Check if the insert was successful
+      if ($result){
+        $insert = true;
+      } 
+      else {
+        echo "The record is not successfully recorded! <br>" . mysqli_error($conn);
+      }
     }
-    else{
-      echo "The record is not sucessfully recorded! <br>". mysqli_error($conn);
+    else 
+    {
+      $notinsert = true;
     }
   }
 }
@@ -126,6 +129,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
   </div>
 </div>
 
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this note?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <a id="confirmDelete" class="btn btn-danger" href="#">Delete</a>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- nav section -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="#">iNotes</a>
@@ -188,6 +212,17 @@ if($update){
 </div>";
 }
 ?>
+<?php
+//messgae after updates
+if($notinsert){
+  echo "<div class='alert alert-warning alert-dismissible fade show' role='alert'>
+  <strong>Warning!! </strong>Title and Description field must not be empty.
+  <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+    <span aria-hidden='true'>&times;</span>
+  </button>
+</div>";
+}
+?>
 
 <!-- note haru halne container -->
 <div class="container my-5">
@@ -219,7 +254,7 @@ if($update){
           <tbody>
             <?php
             //display query
-              $sql = "SELECT * FROM `notes`";
+              $sql = "SELECT * FROM `notes` ORDER BY `sno` DESC";
               $result = mysqli_query($conn, $sql);
               $sno = 0;
               while ($row = mysqli_fetch_array($result))
@@ -262,30 +297,25 @@ if($update){
           description = tr.getElementsByTagName('td')[1].innerText; //index ma rahe xa tesko anusar tanxa data for edit
           console.log(description);
           console.log(title);
-          titleEdit.value - title;
+          titleEdit.value = title;
           descriptionEdit.value = description;
           snoEdit.value = e.target.id;
           console.log(e.target.id); //action listener
           $('#editModal').modal('toggle');
       })
     });
-    // for delete confimartion message
-    deletes = document.getElementsByClassName('delete');
-      Array.from(deletes).forEach((element)=>{
-        element.addEventListener('click',(e)=>{
-          console.log("edit ", );
-          sno = e.target.id.substr(1,)
-          
-          if (confirm("Are you sure you want to delete this note!!")){
-            console.log("yes");
-            window.location = `/basic/phpcrud/notes/index.php?delete=${sno}`;
-            //User  post request to submit a form
-          }
-          else{
-            console.log("no");
-          }
-      })
-    })
+
+        deletes = document.getElementsByClassName('delete');
+        Array.from(deletes).forEach((element) => {
+        element.addEventListener('click', (e) => {
+        console.log("delete", e);
+        sno = e.target.id.substr(1);
+        // Set the href of the confirmation modal's delete button
+        document.getElementById('confirmDelete').setAttribute('href', `/basic/phpcrud/notes/index.php?delete=${sno}`);
+        // Open the confirmation modal
+        $('#deleteConfirmationModal').modal('show');
+      });
+    });
     </script>
   </body>
 </html>
